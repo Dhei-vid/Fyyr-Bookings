@@ -11,7 +11,6 @@ def index():
 
 #  Venues
 #  ----------------------------------------------------------------
-
 @app.route('/venues')
 def venues():
   # TODO: replace with real venues data.

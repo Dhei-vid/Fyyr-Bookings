@@ -1,3 +1,4 @@
+from app import *
 import os
 SECRET_KEY = os.urandom(32)
 # Grabs the folder where the script runs.
@@ -10,4 +11,4 @@ DEBUG = True
 
 
 # TODO IMPLEMENT DATABASE URL
-SQLALCHEMY_DATABASE_URI = '<Put your local database url>'
+SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:{passw}@localhost:5432/todoapp'

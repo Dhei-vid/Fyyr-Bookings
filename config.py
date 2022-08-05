@@ -8,7 +8,10 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 DEBUG = True
 
 # Connect to the database
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:admin@localhost:5432/todoapp'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 
 # TODO IMPLEMENT DATABASE URL
-SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:{passw}@localhost:5432/todoapp'
+passw = 'admin'
+SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:'+passw+'@localhost:5432/fyyr'

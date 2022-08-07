@@ -56,6 +56,7 @@ class Venue(db.Model):
     website_link = db.Column(db.String(500))
     lookingForTalent = db.Column(db.Boolean)
     seeking_description = db.Column(db.String(120))
+    VenueRel = db.relationship('Show', backref='venues', lazy=True)
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
@@ -73,6 +74,7 @@ class Artist(db.Model):
     website_link = db.Column(db.String(500))
     lookingForTalent = db.Column(db.Boolean)
     seeking_description = db.Column(db.String(120))
+    artistRel = db.relationship('Show', backref='artist', lazy=True)
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
     def __repr__(self):
@@ -119,7 +121,8 @@ def index():
 def venues():
   # TODO: replace with real venues data.
   #       num_upcoming_shows should be aggregated based on number of upcoming shows per venue.
-  # data =
+
+  # venue = Venue.query.all()  
 
   data=[{
     "city": "San Francisco",

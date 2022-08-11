@@ -55,7 +55,7 @@ class Venue(db.Model):
     state = db.Column(db.String(120))
     address = db.Column(db.String(120))
     phone = db.Column(db.String(120))
-    genres = db.Column(ARRAY(db.String(120)))
+    genres = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
     website_link = db.Column(db.String(500))
@@ -73,7 +73,7 @@ class Artist(db.Model):
     city = db.Column(db.String(120))
     state = db.Column(db.String(120))
     phone = db.Column(db.String(120))
-    genres = db.Column(ARRAY(db.String(120)))
+    genres = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
     website_link = db.Column(db.String(500))
@@ -145,6 +145,7 @@ def venues():
       }
       venue = Venue.query.filter_by(city=venues.city, state=venues.state).all()
       # upcoming_shows = Show.query.filter(Show.venue_id == venue.id).filter(Show.start_time > datetime.now()).count()
+
       for venue_data in venue:
          city_state["venues"].append({
             "id": venue_data.id,
@@ -162,7 +163,6 @@ def search_venues():
   # seach for Hop should return "The Musical Hop".
   # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
   
-  # search_data = 
   response={
     "count": 1,
     "data": [{
@@ -343,51 +343,46 @@ def show_artist(artist_id):
   # shows the artist page with the given artist_id
   # TODO: replace with real artist data from the artist table, using artist_id
 
-  # data = Artist.query.get(artist_id)
+  artist = Artist.query.get(artist_id)
+  upcoming_shows = Show.query.filter(Show.artistID == artist_id).filter(Show.startTime > datetime.datetime.now()).all()
+  past_shows =  Show.query.filter(Show.artistID == artist_id).filter(Show.startTime < datetime.datetime.now()).all()
+
   
-  # Artist isn't a list
-  artists = Artist.query.get(artist_id)
-  pastShows = Show.query.filter(Show.artistID == artist_id).filter(Show.startTime < datetime.datetime.now()).all()
-  upcomingShows = Show.query.filter(Show.artistID == artist_id).filter(Show.startTime > datetime.datetime.now()).all()
-  
-  
-  data = []
-  
-  artist_data = {
-    "id": artists.id,
-    "name": artists.name,
-    "genres": artists.genres,
-    "city" : artists.city,
-    "state": artists.state,
-    "phone": artists.phone,
-    "website": artists.website_link,
-    "facebook_link": artists.facebook_link,
-    "seeking_venue": artists.looking_for_venue,
-    "seeking_description": artists.seeking_description,
-    "image_link": artists.image_link,
+  data = {
+    "id": artist.id,
+    "name": artist.name,
+    "genres": artist.genres.split(','),
+    "city": artist.city,
+    "state": artist.state,
+    "phone": artist.phone,
+    "website": artist.website_link,
+    "facebook_link": artist.facebook_link,
+    "seeking_venue": artist.looking_for_venue,
+    "seeking_description": artist.seeking_description,
+    "image_link": artist.image_link,
     "past_shows": [],
-    "upcoming_shows": [],
-    "past_shows_count": len(pastShows),
-    "upcoming_shows_count": len(upcomingShows)
+    # "upcoming_shows": [],
+    "past_shows_count": len(past_shows),
+    "upcoming_shows_count": len(upcoming_shows),
   }
 
-  for show in pastShows:
-    artist_data["past_shows"].append({
-      "venue_id": show.venueID,
-      # "venue_name": show.venue.name,
-      # "venue_image_link": show.venue.image_link,
-      "start_time": show.startTime
-    })
   
-  for show in upcomingShows:
-    artist_data["upcoming_shows"].append({
-      "venue_id": show.venueID,
-      # "venue_name": show.venue.name,
-      # "venue_image_link": show.venue.image_link,
-      "start_time": show.startTime
-    })
+  # Getting the details for upcoming shows
+  
+  # for shows in upcoming_shows:
+  #   data["upcoming_shows"].append({
+  #     "venue_id": shows.venue.id,
+  #     "venue_name": "The Musical Hop",
+  #     "venue_image_link": ''
+  #   })
 
-  data.append(artist_data)
+    
+
+    
+
+
+
+  
 
   # data1={
   #   "id": 4,
@@ -475,7 +470,7 @@ def edit_artist(artist_id):
   artist={
     "id": artist_list.id,
     "name": artist_list.name,
-    "genres": artist_list.genres,
+    "genres": artist_list.genres.split(','),
     "city": artist_list.city,
     "state": artist_list.state,
     "phone": artist_list.phone,
@@ -491,6 +486,31 @@ def edit_artist(artist_id):
 def edit_artist_submission(artist_id):
   # TODO: take values from the form submitted, and update existing
   # artist record with ID <artist_id> using the new attributes
+
+  form = Artist(request.form)
+
+  if request.method == 'POST' and form.validate():
+    try:
+      artist = Artist.query.get(artist_id)
+      artist.name = form.name.data,
+      artist.genres = ",".join(form.genres.data),
+      artist.address = form.address.data,
+      artist.city = form.city.data,
+      artist.state = form.state.data
+      artist.phone = form.phone.data
+      artist.website = form.website_link.data
+      artist.facebook_link = form.facebook_link.data
+      artist.seeking_talent = form.looking_for_talent.data
+      edit_venue.image_link = form.image_link.data
+
+      db.session.add(artist)
+      db.session.commit()
+      flash('Successfully updated artist')
+    except:
+      db.session.rollback()
+      flash('Could not update artist')
+    finally:
+      db.session.close()
 
   return redirect(url_for('show_artist', artist_id=artist_id))
 
@@ -533,15 +553,17 @@ def edit_venue_submission(venue_id):
       edit_venue.city = form.city.data
       edit_venue.state = form.state.data
       edit_venue.phone = form.phone.data
-      edit_venue.website = form.website.data
+      edit_venue.website = form.website_link.data
       edit_venue.facebook_link = form.facebook_link.data
-      edit_venue.seeking_talent = form.seeking_talent.data
+      edit_venue.seeking_talent = form.looking_for_talent.data
       edit_venue.image_link = form.image_link.data
 
       db.session.add(edit_venue)
       db.commit()
+      flash('Successfully updated venue')
     except:
       db.session.rollback()
+      flash('Could not update venue')
     finally:
       db.session.close()
  
@@ -568,7 +590,7 @@ def create_artist_submission():
       city = request.form.get('city'),
       state = request.form.get('state'),
       phone = request.form.get('phone'),
-      genres = request.form.getlist('genres'),
+      genres = request.form.get('genres'),
       image_link = request.form.get('image_link'),
       facebook_link = request.form.get('facebook_link'),
       website_link = request.form.get('website_link'),
